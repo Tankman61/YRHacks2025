@@ -18,5 +18,4 @@ def main():
 
         print("Ollama:", response['message']['content'])
 
-if __name__ == "__main__":
-    main()
+main()
