@@ -2,46 +2,42 @@ import React, { useState } from 'react';
 import './App.css';
 
 const API_ENABLE_PROTECTION = 'http://localhost:8000/api/enable-protection';
-// const API_TRACKING_ENDPOINT = 'http://localhost:8000/api/track-tab'; // for future use
 
-function App() {
+const App: React.FC = () => {
   const [url, setUrl] = useState<string>('');
   const [checkResult, setCheckResult] = useState<string>('');
-
   const [reportUrl, setReportUrl] = useState<string>('');
   const [reportDetails, setReportDetails] = useState<string>('');
   const [reportMessage, setReportMessage] = useState<string>('');
-
   const [darkMode, setDarkMode] = useState<boolean>(false);
-
   const [feedbackRating, setFeedbackRating] = useState<number>(0);
   const [feedbackText, setFeedbackText] = useState<string>('');
   const [feedbackMessage, setFeedbackMessage] = useState<string>('');
-
   const [protectionEnabled, setProtectionEnabled] = useState<boolean>(false);
   const [keyboardVisible, setKeyboardVisible] = useState<boolean>(false);
 
   const toggleDarkMode = () => setDarkMode(prev => !prev);
 
   const checkLink = async () => {
-    if (!url) return;
-    setCheckResult('Checking...');
-
+    if (!url) {
+      setCheckResult('No URL provided.');
+      return;
+    }
+    setCheckResult('Checking link...');
     const startTime = performance.now();
+
     try {
       const response = await fetch(`http://localhost:8000/api/check?url=${encodeURIComponent(url)}`);
       if (!response.ok) throw new Error('Network response was not OK');
-
       const data = await response.json();
-      const endTime = performance.now();
-      const responseTime = Math.round(endTime - startTime);
-
-      setCheckResult(data.distraction
-        ? `Dangerous (Response Time: ${responseTime}ms) 🚨`
-        : `Not Dangerous (Response Time: ${responseTime}ms) 👍`
+      const elapsed = Math.round(performance.now() - startTime);
+      setCheckResult(
+        data.distraction
+          ? `Dangerous (Response Time: ${elapsed}ms) 🚨`
+          : `Not Dangerous (Response Time: ${elapsed}ms) 👍`
       );
     } catch (error: any) {
-      setCheckResult('Error: ' + error.message);
+      setCheckResult(`Error: ${error.message}`);
     }
   };
 
@@ -77,7 +73,7 @@ function App() {
   return (
     <div className={darkMode ? 'App dark' : 'App'}>
       <header className="header">
-        <div className="brand">Scammurai</div>
+        <div className="brand">FocusFlow</div>
         <nav className="navbar">
           <ul>
             <li><a href="#check">Check</a></li>
@@ -100,11 +96,11 @@ function App() {
             value={url}
             onChange={(e) => setUrl(e.target.value)}
           />
-          <button onClick={checkLink}>Check Link</button>
+          <button className="check-btn" onClick={checkLink}>Check Link</button>
         </div>
         {checkResult && <div className="result">{checkResult}</div>}
 
-        <div className="protection-controls mt-4 space-x-2">
+        <div className="protection-controls">
           <button onClick={enableProtection}>
             {protectionEnabled ? 'Protection Enabled ✅' : 'Enable Protection 🔒'}
           </button>
@@ -148,23 +144,23 @@ function App() {
             <ul>
               <li>Check for urgent, threatening language or unbelievable offers.</li>
               <li>Examine URLs carefully; watch out for subtle spelling differences.</li>
-              <li>If something seems off, it probably is—verify before clicking.</li>
+              <li>If something seems off, verify before clicking.</li>
             </ul>
           </div>
           <div className="education-card">
             <h3>Preventative Measures</h3>
             <ul>
               <li>Use strong, unique passwords with multi-factor authentication.</li>
-              <li>Keep your software and security patches up to date.</li>
-              <li>Monitor accounts regularly for suspicious activity.</li>
+              <li>Keep your software up-to-date.</li>
+              <li>Review your browsing habits regularly.</li>
             </ul>
           </div>
           <div className="education-card">
             <h3>Stay Informed</h3>
             <ul>
-              <li>Follow reputable cybersecurity blogs and websites.</li>
-              <li>Be aware of the latest phishing trends and techniques.</li>
-              <li>Report scams to authorities and organizations promptly.</li>
+              <li>Follow reputable cybersecurity blogs.</li>
+              <li>Be aware of the latest phishing trends.</li>
+              <li>Report scams to authorities promptly.</li>
             </ul>
           </div>
         </div>
@@ -173,7 +169,7 @@ function App() {
       <section id="feedback" className="section feedback-section">
         <h2>Feedback</h2>
         <p className="feedback-intro">
-          We value your feedback. Please let us know how we can improve your experience.
+          We value your feedback. Let us know how we can improve FocusFlow.
         </p>
         <div className="feedback-form">
           <div className="rating">
@@ -201,24 +197,10 @@ function App() {
       </section>
 
       <footer className="footer">
-        <p>&copy; 2025 Scammurai. All rights reserved.</p>
+        <p>&copy; 2025 FocusFlow. All rights reserved.</p>
       </footer>
-
-      {/* Future: Chrome Tab Tracking */}
-      {/*
-      chrome.tabs.onActivated.addListener(activeInfo => {
-        chrome.tabs.get(activeInfo.tabId, tab => {
-          console.log("Active tab changed:", tab.url);
-          fetch(API_TRACKING_ENDPOINT, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ url: tab.url }),
-          });
-        });
-      });
-      */}
     </div>
   );
-}
+};
 
 export default App;
