@@ -1,112 +1,224 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import './App.css';
 
+const API_ENABLE_PROTECTION = 'http://localhost:8000/api/enable-protection';
+// const API_TRACKING_ENDPOINT = 'http://localhost:8000/api/track-tab'; // for future use
 
-interface CheckResponse {
- distraction: boolean;
+function App() {
+  const [url, setUrl] = useState<string>('');
+  const [checkResult, setCheckResult] = useState<string>('');
+
+  const [reportUrl, setReportUrl] = useState<string>('');
+  const [reportDetails, setReportDetails] = useState<string>('');
+  const [reportMessage, setReportMessage] = useState<string>('');
+
+  const [darkMode, setDarkMode] = useState<boolean>(false);
+
+  const [feedbackRating, setFeedbackRating] = useState<number>(0);
+  const [feedbackText, setFeedbackText] = useState<string>('');
+  const [feedbackMessage, setFeedbackMessage] = useState<string>('');
+
+  const [protectionEnabled, setProtectionEnabled] = useState<boolean>(false);
+  const [keyboardVisible, setKeyboardVisible] = useState<boolean>(false);
+
+  const toggleDarkMode = () => setDarkMode(prev => !prev);
+
+  const checkLink = async () => {
+    if (!url) return;
+    setCheckResult('Checking...');
+
+    const startTime = performance.now();
+    try {
+      const response = await fetch(`http://localhost:8000/api/check?url=${encodeURIComponent(url)}`);
+      if (!response.ok) throw new Error('Network response was not OK');
+
+      const data = await response.json();
+      const endTime = performance.now();
+      const responseTime = Math.round(endTime - startTime);
+
+      setCheckResult(data.distraction
+        ? `Dangerous (Response Time: ${responseTime}ms) 🚨`
+        : `Not Dangerous (Response Time: ${responseTime}ms) 👍`
+      );
+    } catch (error: any) {
+      setCheckResult('Error: ' + error.message);
+    }
+  };
+
+  const enableProtection = async () => {
+    try {
+      const response = await fetch(API_ENABLE_PROTECTION, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ enabled: true }),
+      });
+      if (!response.ok) throw new Error('Failed to enable protection');
+
+      setProtectionEnabled(true);
+    } catch (error: any) {
+      console.error('Enable protection failed:', error.message);
+    }
+  };
+
+  const submitReport = () => {
+    if (!reportUrl) return;
+    setReportMessage("Thank you for the report. We'll review it shortly.");
+    setReportUrl('');
+    setReportDetails('');
+  };
+
+  const submitFeedback = () => {
+    if (feedbackRating === 0) return;
+    setFeedbackMessage('Thank you for your feedback!');
+    setFeedbackRating(0);
+    setFeedbackText('');
+  };
+
+  return (
+    <div className={darkMode ? 'App dark' : 'App'}>
+      <header className="header">
+        <div className="brand">Scammurai</div>
+        <nav className="navbar">
+          <ul>
+            <li><a href="#check">Check</a></li>
+            <li><a href="#report">Report</a></li>
+            <li><a href="#education">Education</a></li>
+            <li><a href="#feedback">Feedback</a></li>
+          </ul>
+        </nav>
+        <button className="dark-mode-toggle" onClick={toggleDarkMode}>
+          {darkMode ? 'Light Mode' : 'Dark Mode'}
+        </button>
+      </header>
+
+      <section id="check" className="section check-section">
+        <h2>Check a Link</h2>
+        <div className="input-group">
+          <input
+            type="text"
+            placeholder="Paste your URL here..."
+            value={url}
+            onChange={(e) => setUrl(e.target.value)}
+          />
+          <button onClick={checkLink}>Check Link</button>
+        </div>
+        {checkResult && <div className="result">{checkResult}</div>}
+
+        <div className="protection-controls mt-4 space-x-2">
+          <button onClick={enableProtection}>
+            {protectionEnabled ? 'Protection Enabled ✅' : 'Enable Protection 🔒'}
+          </button>
+          <button onClick={() => setKeyboardVisible(prev => !prev)}>
+            {keyboardVisible ? 'Hide On-Screen Keyboard ⌨️' : 'Show On-Screen Keyboard ⌨️'}
+          </button>
+          <button onClick={() => alert('Redirect to phishing report page')}>
+            Report Phishing 🚩
+          </button>
+        </div>
+      </section>
+
+      <section id="report" className="section report-section">
+        <h2>Report Suspicious Link</h2>
+        <div className="report-form">
+          <input
+            type="text"
+            placeholder="Suspicious URL"
+            value={reportUrl}
+            onChange={(e) => setReportUrl(e.target.value)}
+          />
+          <textarea
+            placeholder="Add details or context about this link..."
+            value={reportDetails}
+            onChange={(e) => setReportDetails(e.target.value)}
+          />
+          <button onClick={submitReport}>Submit Report</button>
+        </div>
+        {reportMessage && <div className="report-message">{reportMessage}</div>}
+      </section>
+
+      <section id="education" className="section education-section">
+        <h2>Learn About Scams</h2>
+        <p className="education-intro">
+          Understanding common scam tactics and how to protect yourself is essential.
+          Below are some quick tips to keep in mind:
+        </p>
+        <div className="education-cards">
+          <div className="education-card">
+            <h3>How to Spot a Scam</h3>
+            <ul>
+              <li>Check for urgent, threatening language or unbelievable offers.</li>
+              <li>Examine URLs carefully; watch out for subtle spelling differences.</li>
+              <li>If something seems off, it probably is—verify before clicking.</li>
+            </ul>
+          </div>
+          <div className="education-card">
+            <h3>Preventative Measures</h3>
+            <ul>
+              <li>Use strong, unique passwords with multi-factor authentication.</li>
+              <li>Keep your software and security patches up to date.</li>
+              <li>Monitor accounts regularly for suspicious activity.</li>
+            </ul>
+          </div>
+          <div className="education-card">
+            <h3>Stay Informed</h3>
+            <ul>
+              <li>Follow reputable cybersecurity blogs and websites.</li>
+              <li>Be aware of the latest phishing trends and techniques.</li>
+              <li>Report scams to authorities and organizations promptly.</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <section id="feedback" className="section feedback-section">
+        <h2>Feedback</h2>
+        <p className="feedback-intro">
+          We value your feedback. Please let us know how we can improve your experience.
+        </p>
+        <div className="feedback-form">
+          <div className="rating">
+            <label htmlFor="rating">Rate us:</label>
+            <div className="stars">
+              {[1, 2, 3, 4, 5].map((star) => (
+                <span
+                  key={star}
+                  className={`star ${feedbackRating >= star ? 'filled' : ''}`}
+                  onClick={() => setFeedbackRating(star)}
+                >
+                  ★
+                </span>
+              ))}
+            </div>
+          </div>
+          <textarea
+            placeholder="Tell us more..."
+            value={feedbackText}
+            onChange={(e) => setFeedbackText(e.target.value)}
+          />
+          <button onClick={submitFeedback}>Submit Feedback</button>
+        </div>
+        {feedbackMessage && <div className="feedback-message">{feedbackMessage}</div>}
+      </section>
+
+      <footer className="footer">
+        <p>&copy; 2025 Scammurai. All rights reserved.</p>
+      </footer>
+
+      {/* Future: Chrome Tab Tracking */}
+      {/*
+      chrome.tabs.onActivated.addListener(activeInfo => {
+        chrome.tabs.get(activeInfo.tabId, tab => {
+          console.log("Active tab changed:", tab.url);
+          fetch(API_TRACKING_ENDPOINT, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ url: tab.url }),
+          });
+        });
+      });
+      */}
+    </div>
+  );
 }
-
-
-const App: React.FC = () => {
- const [url, setUrl] = useState<string>('');
- const [checkResult, setCheckResult] = useState<string>('');
- const [darkMode, setDarkMode] = useState<boolean>(false);
-
-
- // On load, retrieve the active tab's URL using the Chrome Tabs API.
- useEffect(() => {
-   if (typeof chrome !== 'undefined' && chrome.tabs) {
-     chrome.tabs.query({ active: true, currentWindow: true }, (tabs: chrome.tabs.Tab[]) => {
-       if (tabs.length > 0 && tabs[0].url) {
-         setUrl(tabs[0].url);
-       }
-     });
-   } else {
-     console.warn('Chrome Tabs API is not available.');
-   }
- }, []);
-
-
- // Toggle between dark and light mode.
- const toggleDarkMode = () => {
-   setDarkMode(!darkMode);
- };
-
-
- // Check the current URL by calling your backend API.
- const checkLink = async (): Promise<void> => {
-   if (!url) {
-     setCheckResult('No URL provided.');
-     return;
-   }
-   setCheckResult('Checking link...');
-   const startTime = performance.now();
-
-
-   try {
-     // Replace with your actual API endpoint URL.
-     const response = await fetch(`http://localhost:8000/api/check?url=${encodeURIComponent(url)}`);
-     if (!response.ok) throw new Error('Network response was not OK');
-     const data: CheckResponse = await response.json();
-     const elapsed = Math.round(performance.now() - startTime);
-     setCheckResult(
-       data.distraction
-         ? `Warning: Distraction detected! (${elapsed}ms) 🚨`
-         : `Good job! This link is distraction-free. (${elapsed}ms) 👍`
-     );
-   } catch (error: any) {
-     setCheckResult(`Error: ${error.message}`);
-   }
- };
-
-
- return (
-   <div className={darkMode ? 'App dark' : 'App'}>
-     <header className="header">
-       <h1>FocusFlow</h1>
-       <button className="toggle-mode" onClick={toggleDarkMode}>
-         {darkMode ? 'Light Mode' : 'Dark Mode'}
-       </button>
-     </header>
-
-
-     <div className="content">
-       <div className="section">
-         <h2>Active Tab</h2>
-         <input
-           type="text"
-           value={url}
-           onChange={(e) => setUrl(e.target.value)}
-           placeholder="Your active tab URL will appear here..."
-         />
-         <button className="check-btn" onClick={checkLink}>
-           Check Link
-         </button>
-         {checkResult && <p className="result">{checkResult}</p>}
-       </div>
-
-
-       <div className="section">
-         <h2>Productivity Tips</h2>
-         <p>
-           FocusFlow helps you stay productive by identifying distracting or dangerous websites.
-           Use the information to maintain focus during study sessions:
-         </p>
-         <ul>
-           <li>Avoid clicking suspicious links.</li>
-           <li>Plan focused time blocks and take breaks.</li>
-           <li>Review your browsing habits regularly.</li>
-         </ul>
-       </div>
-     </div>
-
-
-     <footer className="footer">
-       <p>&copy; 2025 FocusFlow. All rights reserved.</p>
-     </footer>
-   </div>
- );
-};
-
 
 export default App;

@@ -1,88 +1,56 @@
-/* Reset and base styles */
-* {
-   margin: 0;
-   padding: 0;
-   box-sizing: border-box;
- }
-  body {
-   font-family: 'Segoe UI', sans-serif;
- }
-  /* App container with light and dark modes */
- .App {
-   padding: 1rem;
-   background-color: #f5f5f5;
-   color: #333;
-   min-width: 300px;
-   width: 100%;
-   min-height: 300px;  /* Ensure the popup has a decent initial height */
- }
-  .App.dark {
-   background-color: #1a1a1a;
-   color: #e0e0e0;
- }
-  /* Header styles */
- .header {
-   display: flex;
-   justify-content: space-between;
-   align-items: center;
-   padding-bottom: 1rem;
-   border-bottom: 1px solid #ccc;
- }
-  .header h1 {
-   font-size: 1.5rem;
- }
-  .toggle-mode {
-   padding: 0.5rem 1rem;
-   border: 1px solid currentColor;
-   background: transparent;
-   border-radius: 4px;
-   cursor: pointer;
- }
-  /* Main content area */
- .content {
-   margin-top: 1.5rem;
- }
-  .section {
-   margin-bottom: 1.5rem;
- }
-  .section h2 {
-   font-size: 1.25rem;
-   margin-bottom: 0.5rem;
- }
-  /* Input field styling */
- input[type="text"] {
-   width: 100%;
-   max-width: 400px;
-   padding: 0.5rem;
-   margin-bottom: 1rem;
-   border: 1px solid #aaa;
-   border-radius: 4px;
-   font-size: 1rem;
- }
-  /* Buttons */
- .check-btn {
-   padding: 0.55rem 1rem;
-   border: none;
-   border-radius: 4px;
-   background-color: #007bff;
-   color: #fff;
-   cursor: pointer;
-   margin-bottom: 1rem;
- }
-  .check-btn:hover {
-   opacity: 0.9;
- }
-  /* Result message styling */
- .result {
-   margin-top: 0.75rem;
-   font-size: 1rem;
-   font-weight: bold;
- }
-  /* Footer styles */
- .footer {
-   text-align: center;
-   font-size: 0.8rem;
-   margin-top: 2rem;
-   padding-top: 0.5rem;
-   border-top: 1px solid #ccc;
- }
+/* src/App.css */
+body {
+  background-color: #f0f4f8;
+  margin: 0;
+  padding: 0;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.container {
+  padding: 20px;
+  text-align: center;
+}
+
+h1 {
+  color: #333;
+  font-size: 24px;
+  margin-bottom: 20px;
+}
+
+h2 {
+  color: #555;
+  font-size: 20px;
+  margin: 15px 0;
+}
+
+p {
+  color: #444;
+  font-size: 16px;
+  line-height: 1.5;
+  margin: 10px 0;
+}
+
+/* Card style for the tab data container */
+.card {
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  padding: 15px;
+  margin-top: 20px;
+}
+
+/* Example styling for a button, if needed later */
+.button {
+  background-color: #007bff;
+  border: none;
+  color: white;
+  padding: 10px 20px;
+  font-size: 14px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.button:hover {
+  background-color: #0056b3;
+}
