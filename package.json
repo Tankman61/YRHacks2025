@@ -21,6 +21,7 @@
     "watch": "webpack -w --config webpack.config.js"
   },
   "devDependencies": {
+    "@types/chrome": "^0.0.313",
     "copy-webpack-plugin": "^13.0.0",
     "css-loader": "^7.1.2",
     "html-webpack-plugin": "^5.6.3",
