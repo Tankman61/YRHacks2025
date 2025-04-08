@@ -71,16 +71,6 @@ const App: React.FC = () => {
       const response = await fetch(apiEndpoint);
       if (!response.ok) throw new Error('Network response was not OK');
 
-      // The API returns a JSON object like: { url, distraction, output }
-      const data = await response.json();
-      const isDistracting: boolean = data.distraction;
-      const elapsed = Math.round(performance.now() - startTime);
-
-      setCheckResult(
-        isDistracting
-          ? `Distracting (Response Time: ${elapsed}ms) 🚨`
-          : `Not Distracting (Response Time: ${elapsed}ms) 👍`
-      );
       const data: CheckResponse = await response.json();
       const elapsed = Math.round(performance.now() - startTime);
 
