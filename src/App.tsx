@@ -1,6 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import './App.css';
 
+const API_ENABLE_PROTECTION = 'http://localhost:8000/api/enable-protection';
+
+interface CheckResponse {
+  distraction: boolean;
+}
+
 const App: React.FC = () => {
   const [url, setUrl] = useState<string>('');
   const [checkResult, setCheckResult] = useState<string>('');
@@ -10,6 +16,11 @@ const App: React.FC = () => {
   const [darkMode, setDarkMode] = useState<boolean>(false);
   const [protectionEnabled, setProtectionEnabled] = useState<boolean>(false);
   const [activeTab, setActiveTab] = useState<string>('check');
+  const [showModal, setShowModal] = useState<boolean>(false);
+  const [feedbackRating, setFeedbackRating] = useState<number>(0);
+  const [feedbackText, setFeedbackText] = useState<string>('');
+  const [feedbackMessage, setFeedbackMessage] = useState<string>('');
+  const [keyboardVisible, setKeyboardVisible] = useState<boolean>(false);
 
   // Get current URL when extension opens
   useEffect(() => {
@@ -22,7 +33,7 @@ const App: React.FC = () => {
     }
   }, []);
 
-  // Load saved settings
+  // Load saved settings (for dark mode and protection status)
   useEffect(() => {
     if (chrome?.storage?.sync) {
       chrome.storage.sync.get(['darkMode', 'protectionEnabled'], (result) => {
@@ -56,21 +67,21 @@ const App: React.FC = () => {
     const startTime = performance.now();
 
     try {
-      // Build the API endpoint using the provided URL.
       const apiEndpoint = `http://localhost:8000/api/check?url=${encodeURIComponent(url)}`;
       const response = await fetch(apiEndpoint);
       if (!response.ok) throw new Error('Network response was not OK');
 
-      // The API returns a JSON object like: { url, distraction, output }
-      const data = await response.json();
-      const isDistracting: boolean = data.distraction;
+      const data: CheckResponse = await response.json();
       const elapsed = Math.round(performance.now() - startTime);
 
-      setCheckResult(
-        isDistracting
-          ? `Distracting (Response Time: ${elapsed}ms) 🚨`
-          : `Not Distracting (Response Time: ${elapsed}ms) 👍`
-      );
+      if (data.distraction) {
+        // Instead of immediately showing a result, present the modal popup.
+        setShowModal(true);
+        // Clear previous check result.
+        setCheckResult('');
+      } else {
+        setCheckResult(`Not Distracting (Response Time: ${elapsed}ms) 👍`);
+      }
     } catch (error: any) {
       setCheckResult(`Error: ${error.message}`);
     }
@@ -94,45 +105,56 @@ const App: React.FC = () => {
 
   const submitReport = () => {
     if (!reportUrl) return;
-    
-    // In a real extension, you would send this to your API endpoint for reporting.
     setReportMessage("Thank you for the report. We'll review it shortly.");
     setReportUrl('');
     setReportDetails('');
+  };
+
+  const submitFeedback = () => {
+    if (feedbackRating === 0) return;
+    setFeedbackMessage('Thank you for your feedback!');
+    setFeedbackRating(0);
+    setFeedbackText('');
+  };
+
+  // Modal "No" button handler to close distracting tab.
+  const handleModalNo = () => {
+    if (chrome?.tabs) {
+      chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+        if (tabs.length && tabs[0].id) {
+          chrome.tabs.remove(tabs[0].id);
+        }
+      });
+    } else {
+      window.close();
+    }
+    setShowModal(false);
+  };
+
+  // Modal "Yes" button handler simply dismisses the modal.
+  const handleModalYes = () => {
+    setShowModal(false);
   };
 
   return (
     <div className={darkMode ? 'App dark' : 'App'}>
       <header className="header">
         <div className="brand">FocusFlow</div>
+        <nav className="navbar">
+          <ul>
+            <li><a href="#check" onClick={() => setActiveTab('check')}>Check</a></li>
+            <li><a href="#report" onClick={() => setActiveTab('report')}>Report</a></li>
+            <li><a href="#education" onClick={() => setActiveTab('education')}>Info</a></li>
+            <li><a href="#feedback" onClick={() => setActiveTab('feedback')}>Feedback</a></li>
+          </ul>
+        </nav>
         <button className="dark-mode-toggle" onClick={toggleDarkMode}>
           {darkMode ? '☀️' : '🌙'}
         </button>
       </header>
 
-      <nav className="tab-navigation">
-        <button 
-          className={activeTab === 'check' ? 'active' : ''} 
-          onClick={() => setActiveTab('check')}
-        >
-          Check
-        </button>
-        <button 
-          className={activeTab === 'report' ? 'active' : ''} 
-          onClick={() => setActiveTab('report')}
-        >
-          Report
-        </button>
-        <button 
-          className={activeTab === 'education' ? 'active' : ''} 
-          onClick={() => setActiveTab('education')}
-        >
-          Info
-        </button>
-      </nav>
-
       {activeTab === 'check' && (
-        <section className="section check-section">
+        <section id="check" className="section check-section">
           <div className="input-group">
             <input
               type="text"
@@ -143,7 +165,6 @@ const App: React.FC = () => {
             <button className="check-btn" onClick={checkLink}>Check</button>
           </div>
           {checkResult && <div className="result">{checkResult}</div>}
-
           <div className="protection-toggle">
             <label className="toggle-switch">
               <input 
@@ -159,7 +180,7 @@ const App: React.FC = () => {
       )}
 
       {activeTab === 'report' && (
-        <section className="section report-section">
+        <section id="report" className="section report-section">
           <div className="report-form">
             <input
               type="text"
@@ -179,7 +200,7 @@ const App: React.FC = () => {
       )}
 
       {activeTab === 'education' && (
-        <section className="section education-section">
+        <section id="education" className="section education-section">
           <div className="education-card">
             <h3>How to Spot Scams</h3>
             <ul>
@@ -188,7 +209,6 @@ const App: React.FC = () => {
               <li>Verify before clicking suspicious links</li>
             </ul>
           </div>
-          
           <div className="education-card">
             <h3>Focus Tips</h3>
             <ul>
@@ -200,9 +220,57 @@ const App: React.FC = () => {
         </section>
       )}
 
+      {activeTab === 'feedback' && (
+        <section id="feedback" className="section feedback-section">
+          <div className="feedback-form">
+            <div className="rating">
+              <label htmlFor="rating">Rate us:</label>
+              <div className="stars">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <span
+                    key={star}
+                    className={`star ${feedbackRating >= star ? 'filled' : ''}`}
+                    onClick={() => setFeedbackRating(star)}
+                  >
+                    ★
+                  </span>
+                ))}
+              </div>
+            </div>
+            <textarea
+              placeholder="Tell us more..."
+              value={feedbackText}
+              onChange={(e) => setFeedbackText(e.target.value)}
+            />
+            <button onClick={submitFeedback}>Submit Feedback</button>
+          </div>
+          {feedbackMessage && <div className="feedback-message">{feedbackMessage}</div>}
+        </section>
+      )}
+
       <footer className="footer">
         <p>FocusFlow © 2025</p>
       </footer>
+
+      {/* Modal popup for distracting link confirmation */}
+      {showModal && (
+        <div className="modal-overlay">
+          <div className="modal">
+            <h2>This link is distracting!</h2>
+            <p style={{ marginBottom: '20px' }}>
+              Are you sure you want to continue?
+            </p>
+            <div className="modal-buttons">
+              <button className="modal-yes" onClick={handleModalYes}>
+                Yes, continue
+              </button>
+              <button className="modal-no" onClick={handleModalNo}>
+                No, close the link
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
