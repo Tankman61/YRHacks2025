@@ -1,7 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './App.css';
-
-const API_ENABLE_PROTECTION = 'http://localhost:8000/api/enable-protection';
 
 const App: React.FC = () => {
   const [url, setUrl] = useState<string>('');
@@ -10,13 +8,48 @@ const App: React.FC = () => {
   const [reportDetails, setReportDetails] = useState<string>('');
   const [reportMessage, setReportMessage] = useState<string>('');
   const [darkMode, setDarkMode] = useState<boolean>(false);
-  const [feedbackRating, setFeedbackRating] = useState<number>(0);
-  const [feedbackText, setFeedbackText] = useState<string>('');
-  const [feedbackMessage, setFeedbackMessage] = useState<string>('');
   const [protectionEnabled, setProtectionEnabled] = useState<boolean>(false);
-  const [keyboardVisible, setKeyboardVisible] = useState<boolean>(false);
+  const [activeTab, setActiveTab] = useState<string>('check');
 
-  const toggleDarkMode = () => setDarkMode(prev => !prev);
+  // Get current URL when extension opens
+  useEffect(() => {
+    // Chrome extensions can access the current tab
+    if (chrome?.tabs) {
+      chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+        if (tabs[0]?.url) {
+          setUrl(tabs[0].url);
+        }
+      });
+    }
+  }, []);
+
+  // Load saved settings
+  useEffect(() => {
+    if (chrome?.storage?.sync) {
+      chrome.storage.sync.get(['darkMode', 'protectionEnabled'], (result) => {
+        if (result.darkMode !== undefined) setDarkMode(result.darkMode);
+        if (result.protectionEnabled !== undefined) setProtectionEnabled(result.protectionEnabled);
+      });
+    } else {
+      // Default values for development outside of Chrome extension environment
+      const storedDarkMode = localStorage.getItem('darkMode');
+      const storedProtection = localStorage.getItem('protectionEnabled');
+      if (storedDarkMode) setDarkMode(storedDarkMode === 'true');
+      if (storedProtection) setProtectionEnabled(storedProtection === 'true');
+    }
+  }, []);
+
+  const toggleDarkMode = () => {
+    const newMode = !darkMode;
+    setDarkMode(newMode);
+    
+    // Save settings
+    if (chrome?.storage?.sync) {
+      chrome.storage.sync.set({ darkMode: newMode });
+    } else {
+      localStorage.setItem('darkMode', String(newMode));
+    }
+  };
 
   const checkLink = async () => {
     if (!url) {
@@ -27,7 +60,8 @@ const App: React.FC = () => {
     const startTime = performance.now();
 
     try {
-      const response = await fetch(`http://localhost:8000/api/check?url=${encodeURIComponent(url)}`);
+      // In a real extension, you would use a secure API with proper authentication
+      const response = await fetch(`https://api.focusflow.example/check?url=${encodeURIComponent(url)}`);
       if (!response.ok) throw new Error('Network response was not OK');
       const data = await response.json();
       const elapsed = Math.round(performance.now() - startTime);
@@ -41,163 +75,139 @@ const App: React.FC = () => {
     }
   };
 
-  const enableProtection = async () => {
-    try {
-      const response = await fetch(API_ENABLE_PROTECTION, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ enabled: true }),
+  const enableProtection = () => {
+    const newValue = !protectionEnabled;
+    setProtectionEnabled(newValue);
+    
+    // Save setting
+    if (chrome?.storage?.sync) {
+      chrome.storage.sync.set({ protectionEnabled: newValue });
+    } else {
+      localStorage.setItem('protectionEnabled', String(newValue));
+    }
+    
+    // In a real extension, you'd use the chrome.runtime API to communicate
+    // with a background script to enable/disable protection
+    if (chrome?.runtime) {
+      chrome.runtime.sendMessage({ 
+        action: 'toggleProtection', 
+        enabled: newValue 
       });
-      if (!response.ok) throw new Error('Failed to enable protection');
-
-      setProtectionEnabled(true);
-    } catch (error: any) {
-      console.error('Enable protection failed:', error.message);
     }
   };
 
   const submitReport = () => {
     if (!reportUrl) return;
+    
+    // In a real extension, you would send this to your API
+    // fetch('https://api.focusflow.example/report', {...})
+    
     setReportMessage("Thank you for the report. We'll review it shortly.");
     setReportUrl('');
     setReportDetails('');
-  };
-
-  const submitFeedback = () => {
-    if (feedbackRating === 0) return;
-    setFeedbackMessage('Thank you for your feedback!');
-    setFeedbackRating(0);
-    setFeedbackText('');
   };
 
   return (
     <div className={darkMode ? 'App dark' : 'App'}>
       <header className="header">
         <div className="brand">FocusFlow</div>
-        <nav className="navbar">
-          <ul>
-            <li><a href="#check">Check</a></li>
-            <li><a href="#report">Report</a></li>
-            <li><a href="#education">Education</a></li>
-            <li><a href="#feedback">Feedback</a></li>
-          </ul>
-        </nav>
         <button className="dark-mode-toggle" onClick={toggleDarkMode}>
-          {darkMode ? 'Light Mode' : 'Dark Mode'}
+          {darkMode ? '☀️' : '🌙'}
         </button>
       </header>
 
-      <section id="check" className="section check-section">
-        <h2>Check a Link</h2>
-        <div className="input-group">
-          <input
-            type="text"
-            placeholder="Paste your URL here..."
-            value={url}
-            onChange={(e) => setUrl(e.target.value)}
-          />
-          <button className="check-btn" onClick={checkLink}>Check Link</button>
-        </div>
-        {checkResult && <div className="result">{checkResult}</div>}
+      <nav className="tab-navigation">
+        <button 
+          className={activeTab === 'check' ? 'active' : ''} 
+          onClick={() => setActiveTab('check')}
+        >
+          Check
+        </button>
+        <button 
+          className={activeTab === 'report' ? 'active' : ''} 
+          onClick={() => setActiveTab('report')}
+        >
+          Report
+        </button>
+        <button 
+          className={activeTab === 'education' ? 'active' : ''} 
+          onClick={() => setActiveTab('education')}
+        >
+          Info
+        </button>
+      </nav>
 
-        <div className="protection-controls">
-          <button onClick={enableProtection}>
-            {protectionEnabled ? 'Protection Enabled ✅' : 'Enable Protection 🔒'}
-          </button>
-          <button onClick={() => setKeyboardVisible(prev => !prev)}>
-            {keyboardVisible ? 'Hide On-Screen Keyboard ⌨️' : 'Show On-Screen Keyboard ⌨️'}
-          </button>
-          <button onClick={() => alert('Redirect to phishing report page')}>
-            Report Phishing 🚩
-          </button>
-        </div>
-      </section>
+      {activeTab === 'check' && (
+        <section className="section check-section">
+          <div className="input-group">
+            <input
+              type="text"
+              placeholder="URL to check..."
+              value={url}
+              onChange={(e) => setUrl(e.target.value)}
+            />
+            <button className="check-btn" onClick={checkLink}>Check</button>
+          </div>
+          {checkResult && <div className="result">{checkResult}</div>}
 
-      <section id="report" className="section report-section">
-        <h2>Report Suspicious Link</h2>
-        <div className="report-form">
-          <input
-            type="text"
-            placeholder="Suspicious URL"
-            value={reportUrl}
-            onChange={(e) => setReportUrl(e.target.value)}
-          />
-          <textarea
-            placeholder="Add details or context about this link..."
-            value={reportDetails}
-            onChange={(e) => setReportDetails(e.target.value)}
-          />
-          <button onClick={submitReport}>Submit Report</button>
-        </div>
-        {reportMessage && <div className="report-message">{reportMessage}</div>}
-      </section>
+          <div className="protection-toggle">
+            <label className="toggle-switch">
+              <input 
+                type="checkbox" 
+                checked={protectionEnabled} 
+                onChange={enableProtection}
+              />
+              <span className="toggle-slider"></span>
+            </label>
+            <span>Protection {protectionEnabled ? 'Enabled' : 'Disabled'}</span>
+          </div>
+        </section>
+      )}
 
-      <section id="education" className="section education-section">
-        <h2>Learn About Scams</h2>
-        <p className="education-intro">
-          Understanding common scam tactics and how to protect yourself is essential.
-          Below are some quick tips to keep in mind:
-        </p>
-        <div className="education-cards">
+      {activeTab === 'report' && (
+        <section className="section report-section">
+          <div className="report-form">
+            <input
+              type="text"
+              placeholder="Suspicious URL"
+              value={reportUrl}
+              onChange={(e) => setReportUrl(e.target.value)}
+            />
+            <textarea
+              placeholder="Add details about this link..."
+              value={reportDetails}
+              onChange={(e) => setReportDetails(e.target.value)}
+            />
+            <button onClick={submitReport}>Submit Report</button>
+          </div>
+          {reportMessage && <div className="report-message">{reportMessage}</div>}
+        </section>
+      )}
+
+      {activeTab === 'education' && (
+        <section className="section education-section">
           <div className="education-card">
-            <h3>How to Spot a Scam</h3>
+            <h3>How to Spot Scams</h3>
             <ul>
-              <li>Check for urgent, threatening language or unbelievable offers.</li>
-              <li>Examine URLs carefully; watch out for subtle spelling differences.</li>
-              <li>If something seems off, verify before clicking.</li>
+              <li>Check for urgent language or unbelievable offers</li>
+              <li>Examine URLs carefully for misspellings</li>
+              <li>Verify before clicking suspicious links</li>
             </ul>
           </div>
+          
           <div className="education-card">
-            <h3>Preventative Measures</h3>
+            <h3>Focus Tips</h3>
             <ul>
-              <li>Use strong, unique passwords with multi-factor authentication.</li>
-              <li>Keep your software up-to-date.</li>
-              <li>Review your browsing habits regularly.</li>
+              <li>Use website blockers during study time</li>
+              <li>Set specific goals for online sessions</li>
+              <li>Take regular breaks from screen time</li>
             </ul>
           </div>
-          <div className="education-card">
-            <h3>Stay Informed</h3>
-            <ul>
-              <li>Follow reputable cybersecurity blogs.</li>
-              <li>Be aware of the latest phishing trends.</li>
-              <li>Report scams to authorities promptly.</li>
-            </ul>
-          </div>
-        </div>
-      </section>
-
-      <section id="feedback" className="section feedback-section">
-        <h2>Feedback</h2>
-        <p className="feedback-intro">
-          We value your feedback. Let us know how we can improve FocusFlow.
-        </p>
-        <div className="feedback-form">
-          <div className="rating">
-            <label htmlFor="rating">Rate us:</label>
-            <div className="stars">
-              {[1, 2, 3, 4, 5].map((star) => (
-                <span
-                  key={star}
-                  className={`star ${feedbackRating >= star ? 'filled' : ''}`}
-                  onClick={() => setFeedbackRating(star)}
-                >
-                  ★
-                </span>
-              ))}
-            </div>
-          </div>
-          <textarea
-            placeholder="Tell us more..."
-            value={feedbackText}
-            onChange={(e) => setFeedbackText(e.target.value)}
-          />
-          <button onClick={submitFeedback}>Submit Feedback</button>
-        </div>
-        {feedbackMessage && <div className="feedback-message">{feedbackMessage}</div>}
-      </section>
+        </section>
+      )}
 
       <footer className="footer">
-        <p>&copy; 2025 FocusFlow. All rights reserved.</p>
+        <p>FocusFlow © 2025</p>
       </footer>
     </div>
   );
