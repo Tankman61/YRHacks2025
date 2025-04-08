@@ -1,42 +1,374 @@
-#root {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body, html {
+  font-family: 'Helvetica Neue', Arial, sans-serif;
+  overflow-x: hidden;
+  scroll-behavior: smooth;
+}
+
+
+
+
+
+
+
+
+.App {
+  background-color: #f8f9fa;
+  color: #212529;
+  transition: background-color 0.5s ease, color 0.5s ease;
+  min-height: 100vh;
+}
+
+.App.dark {
+  background-color: #212529;
+  color: #f8f9fa;
+}
+
+
+
+
+
+
+
+
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 15px 40px;
+  background-color: #ffffff;
+  border-bottom: 1px solid #dee2e6;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  transition: background-color 0.5s ease, box-shadow 0.5s ease;
+}
+.App.dark .header {
+  background-color: #343a40;
+  border-bottom-color: #495057;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* Brand */
+.brand {
+  font-weight: 600;
+  font-size: 1.5rem;
+}
+
+/* Nav */
+.navbar ul {
+  display: flex;
+  list-style: none;
+}
+
+.navbar li {
+  margin-left: 20px;
+}
+
+.navbar a {
+  text-decoration: none;
+  color: inherit;
+  font-size: 0.95rem;
+  padding: 6px 0;
+  position: relative;
+  transition: color 0.3s ease;
+}
+
+.navbar a:hover {
+  color: #007bff;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+.dark-mode-toggle {
+  background: none;
+  border: 1px solid currentColor;
+  color: inherit;
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: background 0.3s ease;
+}
+.dark-mode-toggle:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+.App.dark .dark-mode-toggle:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+
+
+
+
+
+
+
+.section {
+  padding: 60px 20px;
   text-align: center;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+.section h2 {
+  font-size: 2rem;
+  margin-bottom: 30px;
+  font-weight: 600;
 }
 
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
+
+
+
+
+
+
+
+
+
+.check-section .input-group {
+  display: flex;
+  justify-content: center;
+  margin: 0 auto 20px auto;
+  max-width: 600px;
 }
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
+.check-section input {
+  flex: 1;
+  padding: 15px;
+  font-size: 1rem;
+  border: 1px solid #ced4da;
+  border-right: none;
+  border-radius: 4px 0 0 4px;
+  outline: none;
 }
-.logo.react:hover {
-  filter: drop-shadow(0 0 2em #61dafbaa);
+.check-section button {
+  padding: 15px 25px;
+  font-size: 1rem;
+  border: 1px solid #ced4da;
+  background: #007bff;
+  color: #fff;
+  border-radius: 0 4px 4px 0;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+.check-section button:hover {
+  background: #0056b3;
+}
+.result {
+  font-size: 1.25rem;
+  font-weight: bold;
 }
 
-@keyframes logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+
+
+
+
+
+
+
+
+
+
+.report-section .report-form {
+  max-width: 600px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+.report-form input,
+.report-form textarea {
+  padding: 15px;
+  font-size: 1rem;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+  outline: none;
+  width: 100%;
+}
+.report-form button {
+  align-self: flex-start;
+  padding: 15px 25px;
+  font-size: 1rem;
+  border: none;
+  border-radius: 4px;
+  background: #dc3545;
+  color: #fff;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+.report-form button:hover {
+  background: #b02a37;
+}
+.report-message {
+  margin-top: 20px;
+  font-size: 1rem;
+  color: #28a745;
+  font-weight: 600;
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  a:nth-of-type(2) .logo {
-    animation: logo-spin infinite 20s linear;
-  }
+
+
+
+
+
+
+
+
+
+
+.education-intro {
+  font-size: 1.1rem;
+  max-width: 700px;
+  margin: 0 auto 40px auto;
+  line-height: 1.6;
+}
+.education-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 30px;
+  margin-top: 20px;
+}
+.education-card {
+  background-color: #ffffff;
+  border: 1px solid #dee2e6;
+  padding: 25px;
+  text-align: left;
+  border-radius: 6px;
+  transition: transform 0.3s, box-shadow 0.3s;
+}
+.education-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.07);
+}
+.education-card h3 {
+  margin-bottom: 15px;
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+.education-card ul {
+  list-style: disc;
+  padding-left: 20px;
+  line-height: 1.6;
+}
+.App.dark .education-card {
+  background-color: #343a40;
+  border-color: #495057;
 }
 
-.card {
-  padding: 2em;
+
+
+
+
+
+
+
+
+
+
+.feedback-intro {
+  font-size: 1.1rem;
+  max-width: 600px;
+  margin: 0 auto 40px auto;
+  line-height: 1.6;
+}
+.feedback-form {
+  max-width: 600px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  align-items: center;
+}
+.rating {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+.rating label {
+  margin-bottom: 10px;
+  font-weight: 500;
+}
+.stars {
+  display: flex;
+  gap: 5px;
+}
+.star {
+  font-size: 1.5rem;
+  cursor: pointer;
+  transition: color 0.3s;
+  color: #ced4da;
+}
+.star.filled {
+  color: #ffc107;
+}
+.feedback-form textarea {
+  width: 100%;
+  min-height: 80px;
+  padding: 15px;
+  font-size: 1rem;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+  resize: vertical;
+}
+.feedback-form button {
+  align-self: flex-start;
+  padding: 12px 20px;
+  font-size: 1rem;
+  border: none;
+  border-radius: 4px;
+  background: #28a745;
+  color: #fff;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+.feedback-form button:hover {
+  background: #218838;
+}
+.feedback-message {
+  margin-top: 15px;
+  font-size: 1rem;
+  color: #28a745;
+  font-weight: 600;
 }
 
-.read-the-docs {
-  color: #888;
+
+
+
+
+
+
+
+
+
+
+
+
+
+.footer {
+  background-color: #ffffff;
+  text-align: center;
+  padding: 15px 20px;
+  border-top: 1px solid #dee2e6;
+  font-size: 0.875rem;
+  transition: background-color 0.5s ease, border-color 0.5s ease;
+}
+.App.dark .footer {
+  background-color: #343a40;
+  border-top-color: #495057;
 }
