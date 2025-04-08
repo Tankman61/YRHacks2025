@@ -1,19 +1,9 @@
 {
-    "manifest_version": 3,
-    "name": "FocusFlow Extension",
     "version": "1.0.0",
-    "description": "A React-based Chrome extension for productivity and safety.",
+    "manifest_version": 3,
+    "name": "React Chrome Extension",
     "action": {
-      "default_popup": "index.html",
-      "default_title": "FocusFlow Extension"
-    },
-    "permissions": [
-      "tabs",
-      "activeTab",
-      "storage"
-    ],
-    "host_permissions": [
-      "<all_urls>"
-    ]
-  }
-  
+        "default_popup": "js/index.html",
+        "default_title": "React Chrome Extension"
+    }
+}
