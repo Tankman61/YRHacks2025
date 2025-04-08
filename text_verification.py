@@ -1,21 +1,26 @@
-import ollama
+import asyncio
+from ollama import AsyncClient
 
-def main():
-    model = ""
+async def chat(url, prompt_template):
+    message = {
+        'role': 'user',
+        'content': prompt_template.format(url=url) + f" {url}"
+    }
+      
+    client = AsyncClient()
+    async for part in await client.chat(model='qwen2.5:7b', messages=[message], stream=True):
+        print(part['message']['content'], end='', flush=True)
 
-    while True:
-        user_input = input("You: ")
-        if user_input.lower() in ['exit', 'quit']:
-            print("Exiting chat.")
-            break
+async def main():
+    try:
+        with open('prompt.txt', 'r') as f:
+            prompt_template = f.read()
+    except FileNotFoundError:
+        print("Error: 'prompt.txt' file not found.")
+        return
 
-        response = ollama.chat(
-            model=model,
-            messages=[
-                {"role": "user", "content": user_input}
-            ]
-        )
+    test_url = "https://khanacademy.com/"
+    await chat(test_url, prompt_template)
 
-        print("Ollama:", response['message']['content'])
 
-main()
+asyncio.run(main())
