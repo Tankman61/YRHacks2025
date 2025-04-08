@@ -2,12 +2,15 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
 
-const root = document.createElement("div")
-root.className = "container"
-document.body.appendChild(root)
-const rootDiv = ReactDOM.createRoot(root);
-rootDiv.render(
-  <React.StrictMode>
-    <App />
-  </React.StrictMode>
-);
+// Use the existing root element provided in index.html
+const container = document.getElementById('root');
+if (!container) {
+  console.error("No element with id 'root' found in index.html");
+} else {
+  const rootDiv = ReactDOM.createRoot(container);
+  rootDiv.render(
+    <React.StrictMode>
+      <App />
+    </React.StrictMode>
+  );
+}
