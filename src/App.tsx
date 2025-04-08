@@ -13,7 +13,6 @@ const App: React.FC = () => {
 
   // Get current URL when extension opens
   useEffect(() => {
-    // Chrome extensions can access the current tab
     if (chrome?.tabs) {
       chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
         if (tabs[0]?.url) {
@@ -31,7 +30,6 @@ const App: React.FC = () => {
         if (result.protectionEnabled !== undefined) setProtectionEnabled(result.protectionEnabled);
       });
     } else {
-      // Default values for development outside of Chrome extension environment
       const storedDarkMode = localStorage.getItem('darkMode');
       const storedProtection = localStorage.getItem('protectionEnabled');
       if (storedDarkMode) setDarkMode(storedDarkMode === 'true');
@@ -42,8 +40,6 @@ const App: React.FC = () => {
   const toggleDarkMode = () => {
     const newMode = !darkMode;
     setDarkMode(newMode);
-    
-    // Save settings
     if (chrome?.storage?.sync) {
       chrome.storage.sync.set({ darkMode: newMode });
     } else {
@@ -60,15 +56,20 @@ const App: React.FC = () => {
     const startTime = performance.now();
 
     try {
-      // In a real extension, you would use a secure API with proper authentication
-      const response = await fetch(`https://api.focusflow.example/check?url=${encodeURIComponent(url)}`);
+      // Build the API endpoint using the provided URL.
+      const apiEndpoint = `http://localhost:8000/api/check?url=${encodeURIComponent(url)}`;
+      const response = await fetch(apiEndpoint);
       if (!response.ok) throw new Error('Network response was not OK');
+
+      // The API returns a JSON object like: { url, distraction, output }
       const data = await response.json();
+      const isDistracting: boolean = data.distraction;
       const elapsed = Math.round(performance.now() - startTime);
+
       setCheckResult(
-        data.distraction
-          ? `Dangerous (Response Time: ${elapsed}ms) 🚨`
-          : `Not Dangerous (Response Time: ${elapsed}ms) 👍`
+        isDistracting
+          ? `Distracting (Response Time: ${elapsed}ms) 🚨`
+          : `Not Distracting (Response Time: ${elapsed}ms) 👍`
       );
     } catch (error: any) {
       setCheckResult(`Error: ${error.message}`);
@@ -78,16 +79,11 @@ const App: React.FC = () => {
   const enableProtection = () => {
     const newValue = !protectionEnabled;
     setProtectionEnabled(newValue);
-    
-    // Save setting
     if (chrome?.storage?.sync) {
       chrome.storage.sync.set({ protectionEnabled: newValue });
     } else {
       localStorage.setItem('protectionEnabled', String(newValue));
     }
-    
-    // In a real extension, you'd use the chrome.runtime API to communicate
-    // with a background script to enable/disable protection
     if (chrome?.runtime) {
       chrome.runtime.sendMessage({ 
         action: 'toggleProtection', 
@@ -99,9 +95,7 @@ const App: React.FC = () => {
   const submitReport = () => {
     if (!reportUrl) return;
     
-    // In a real extension, you would send this to your API
-    // fetch('https://api.focusflow.example/report', {...})
-    
+    // In a real extension, you would send this to your API endpoint for reporting.
     setReportMessage("Thank you for the report. We'll review it shortly.");
     setReportUrl('');
     setReportDetails('');

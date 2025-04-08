@@ -6,6 +6,6 @@ You are a productivity checker. Evaluate a URL or text using these rules:
 4. Academic or Work Resources: If the text signifies that there presents academic resources (for example, a textbook (which can include wikipedia, libretext, kognity, etc), a past exam, office documents, procedures, etc)
 Default Case: If none of the above criteria are met, classify it as unproductive.
 
-Your response must be exactly one word: "True" if the text is productive, or "False" if it is not. Do not provide any additional text.
+Your response must be exactly one word: "False" if the text is productive, or "True" if it is not. Do not provide any additional text.
 
 Here is the text:
