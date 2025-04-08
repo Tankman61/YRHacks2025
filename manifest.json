@@ -1,9 +1,25 @@
 {
-    "version": "1.0.0",
     "manifest_version": 3,
-    "name": "React Chrome Extension",
+    "name": "FocusFlow",
+    "version": "1.0",
+    "description": "Detects distracting tabs and covers the screen if a distracting website is loaded.",
+    "permissions": [
+      "tabs",
+      "storage",
+      "notifications"
+    ],
+    "background": {
+      "service_worker": "background.js"
+    },
+    "content_scripts": [
+      {
+        "matches": ["<all_urls>"],
+        "js": ["content.js"],
+        "run_at": "document_end"
+      }
+    ],
     "action": {
-        "default_popup": "js/index.html",
-        "default_title": "React Chrome Extension"
+      "default_popup": "dist/index.html"
     }
-}
+  }
+  

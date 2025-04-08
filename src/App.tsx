@@ -11,24 +11,28 @@ const App: React.FC = () => {
   const [protectionEnabled, setProtectionEnabled] = useState<boolean>(false);
   const [activeTab, setActiveTab] = useState<string>('check');
 
-  // Get current URL when extension opens
+  // Get the current active tab's URL when the popup opens.
   useEffect(() => {
     if (chrome?.tabs) {
       chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
         if (tabs[0]?.url) {
+          console.log('Initial active tab URL:', tabs[0].url);
           setUrl(tabs[0].url);
+          // Optional: Manual check can be triggered here if desired.
+          // manualCheckLink();
         }
       });
     }
   }, []);
-  
 
-  // Load saved settings
+  // Load saved settings.
   useEffect(() => {
     if (chrome?.storage?.sync) {
       chrome.storage.sync.get(['darkMode', 'protectionEnabled'], (result) => {
         if (result.darkMode !== undefined) setDarkMode(result.darkMode);
-        if (result.protectionEnabled !== undefined) setProtectionEnabled(result.protectionEnabled);
+        if (result.protectionEnabled !== undefined) {
+          setProtectionEnabled(result.protectionEnabled);
+        }
       });
     } else {
       const storedDarkMode = localStorage.getItem('darkMode');
@@ -36,6 +40,23 @@ const App: React.FC = () => {
       if (storedDarkMode) setDarkMode(storedDarkMode === 'true');
       if (storedProtection) setProtectionEnabled(storedProtection === 'true');
     }
+  }, []);
+
+  // Listen for messages from the background script.
+  useEffect(() => {
+    const messageListener = (message: any) => {
+      if (message.type === 'DISTRACTING_URL_DETECTED') {
+        console.log('Popup: Received distracting URL message:', message.url);
+        setUrl(message.url);
+        setCheckResult(`Distracting URL detected: ${message.url} (Response Time: ${message.responseTime}ms) 🚨`);
+      }
+    };
+
+    chrome.runtime.onMessage.addListener(messageListener);
+
+    return () => {
+      chrome.runtime.onMessage.removeListener(messageListener);
+    };
   }, []);
 
   const toggleDarkMode = () => {
@@ -48,24 +69,28 @@ const App: React.FC = () => {
     }
   };
 
-  const checkLink = async () => {
+  // A manual check function if the user wants to test a specific URL.
+  const manualCheckLink = async () => {
     if (!url) {
+      console.log('manualCheckLink: No URL provided.');
       setCheckResult('No URL provided.');
       return;
     }
-    setCheckResult('Checking link...');
+    setCheckResult('Checking link manually...');
     const startTime = performance.now();
+    console.log('manualCheckLink: Initiating manual link check for URL:', url);
 
     try {
-      // Build the API endpoint using the provided URL.
       const apiEndpoint = `http://localhost:8000/api/check?url=${encodeURIComponent(url)}`;
+      console.log('manualCheckLink: Fetching from API endpoint:', apiEndpoint);
       const response = await fetch(apiEndpoint);
       if (!response.ok) throw new Error('Network response was not OK');
 
-      // The API returns a JSON object like: { url, distraction, output }
       const data = await response.json();
       const isDistracting: boolean = data.distraction;
       const elapsed = Math.round(performance.now() - startTime);
+
+      console.log('manualCheckLink: API response data:', data, 'Elapsed time:', elapsed, 'ms');
 
       setCheckResult(
         isDistracting
@@ -73,6 +98,7 @@ const App: React.FC = () => {
           : `Not Distracting (Response Time: ${elapsed}ms) 👍`
       );
     } catch (error: any) {
+      console.error('manualCheckLink: Error during API fetch:', error);
       setCheckResult(`Error: ${error.message}`);
     }
   };
@@ -86,17 +112,15 @@ const App: React.FC = () => {
       localStorage.setItem('protectionEnabled', String(newValue));
     }
     if (chrome?.runtime) {
-      chrome.runtime.sendMessage({ 
-        action: 'toggleProtection', 
-        enabled: newValue 
+      chrome.runtime.sendMessage({
+        action: 'toggleProtection',
+        enabled: newValue,
       });
     }
   };
 
   const submitReport = () => {
     if (!reportUrl) return;
-    
-    // In a real extension, you would send this to your API endpoint for reporting.
     setReportMessage("Thank you for the report. We'll review it shortly.");
     setReportUrl('');
     setReportDetails('');
@@ -112,20 +136,20 @@ const App: React.FC = () => {
       </header>
 
       <nav className="tab-navigation">
-        <button 
-          className={activeTab === 'check' ? 'active' : ''} 
+        <button
+          className={activeTab === 'check' ? 'active' : ''}
           onClick={() => setActiveTab('check')}
         >
           Check
         </button>
-        <button 
-          className={activeTab === 'report' ? 'active' : ''} 
+        <button
+          className={activeTab === 'report' ? 'active' : ''}
           onClick={() => setActiveTab('report')}
         >
           Report
         </button>
-        <button 
-          className={activeTab === 'education' ? 'active' : ''} 
+        <button
+          className={activeTab === 'education' ? 'active' : ''}
           onClick={() => setActiveTab('education')}
         >
           Info
@@ -141,20 +165,24 @@ const App: React.FC = () => {
               value={url}
               onChange={(e) => setUrl(e.target.value)}
             />
-            <button className="check-btn" onClick={checkLink}>Check</button>
+            <button className="check-btn" onClick={manualCheckLink}>
+              Check
+            </button>
           </div>
           {checkResult && <div className="result">{checkResult}</div>}
 
           <div className="protection-toggle">
             <label className="toggle-switch">
-              <input 
-                type="checkbox" 
-                checked={protectionEnabled} 
+              <input
+                type="checkbox"
+                checked={protectionEnabled}
                 onChange={enableProtection}
               />
               <span className="toggle-slider"></span>
             </label>
-            <span>Protection {protectionEnabled ? 'Enabled' : 'Disabled'}</span>
+            <span>
+              Protection {protectionEnabled ? 'Enabled' : 'Disabled'}
+            </span>
           </div>
         </section>
       )}
@@ -189,7 +217,7 @@ const App: React.FC = () => {
               <li>Verify before clicking suspicious links</li>
             </ul>
           </div>
-          
+
           <div className="education-card">
             <h3>Focus Tips</h3>
             <ul>
