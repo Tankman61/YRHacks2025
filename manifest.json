@@ -1,11 +1,11 @@
 {
     "manifest_version": 3,
-    "name": "React Chrome Extension",
+    "name": "FocusFlow Extension",
     "version": "1.0.0",
-    "description": "A React-based Chrome extension that checks and tracks link safety.",
+    "description": "A React-based Chrome extension for productivity and safety.",
     "action": {
       "default_popup": "index.html",
-      "default_title": "React Chrome Extension"
+      "default_title": "FocusFlow Extension"
     },
     "permissions": [
       "tabs",
@@ -14,12 +14,6 @@
     ],
     "host_permissions": [
       "<all_urls>"
-    ],
-    "icons": {
-      "16": "icons/icon16.png",
-      "32": "icons/icon32.png",
-      "48": "icons/icon48.png",
-      "128": "icons/icon128.png"
-    }
+    ]
   }
   
